@@ -60,4 +60,28 @@ class AuthController extends Controller
         }
 
     }
+
+    public function register(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:6|confirmed',
+            'password_confirmation' => 'required',
+        ]);
+
+        try {
+            $user = new User();
+            $user->name = $request->input('name');
+            $user->email = $request->input('email');
+            if ($request->has('role')) {
+                $user->role = $request->input('role');
+            }
+            $user->password = Hash::make($request->input('password'));
+            $user->save();
+            return jsend_success(new UserResource($user), JsonResponse::HTTP_OK);
+        } catch (Exception $e) {
+            return jsend_error(__('api.saved-failed', ['model' => 'User']), $e->getCode(), ErrorType::SAVE_ERROR, JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }
